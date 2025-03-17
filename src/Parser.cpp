@@ -7,7 +7,7 @@
 
 namespace
 {
-	const std::map<types, int> priority{
+	const std::map<types, int> typeToPriority{
 		{types::plus, 1},
 		{types::minus, 1},
 		{types::multiplication, 2},
@@ -89,13 +89,105 @@ namespace
 std::shared_ptr<Expression> parse(const std::string &data)
 {
 	auto tokens = tokenize(data);
-	types identFirst = getStringType((*tokens)[0]);
-	std::shared_ptr<Expression> myExpr;
-	int start = 0;
 
-	if (identFirst == types::other)
+	std::shared_ptr<Expression> myExpr;
+	std::shared_ptr<Expression> last;
+
+	for (size_t i = 0; i < tokens->size(); i++)
 	{
-		
+		auto actToken = (*tokens)[i];
+		if (getStringType(actToken) == types::other)
+		{
+			if (isNumberString(actToken))
+			{
+				if (!last)
+					myExpr = std::make_shared<Constant>(actToken.c_str());
+				else
+				{
+					if (auto monoPtr = dynamic_cast<MonoOperation *>(last.get()))
+						monoPtr->obj = std::make_shared<Constant>(actToken.c_str());
+
+					else if (auto binPtr = dynamic_cast<BinaryOperation *>(last.get()))
+						binPtr->rightObj = std::make_shared<Constant>(actToken.c_str());
+				}
+			}
+			else if (actToken[0] == '(')
+			{
+				const std::string underStr = actToken.substr(1, actToken.size() - 2);
+				if (!last)
+					myExpr = std::make_shared<MonoOperation>(types::brackets, parse(underStr));
+				else
+				{
+					if (auto monoPtr = dynamic_cast<MonoOperation *>(last.get()))
+						monoPtr->obj = std::make_shared<MonoOperation>(types::brackets, parse(underStr));
+
+					else if (auto binPtr = dynamic_cast<BinaryOperation *>(last.get()))
+						binPtr->rightObj = std::make_shared<MonoOperation>(types::brackets, parse(underStr));
+				}
+			}
+			else
+			{
+				if (!last)
+					myExpr = std::make_shared<Variable>(actToken);
+				else
+				{
+					if (auto monoPtr = dynamic_cast<MonoOperation *>(last.get()))
+						monoPtr->obj = std::make_shared<Variable>(actToken);
+
+					else if (auto binPtr = dynamic_cast<BinaryOperation *>(last.get()))
+						binPtr->rightObj = std::make_shared<Variable>(actToken);
+				}
+			}
+		}
+		else
+		{
+			types actType = getStringType(actToken);
+			std::shared_ptr<Expression> actFunc;
+
+			if (actType == types::sin || actType == types::cos || actType == types::ln || actType == types::exp)
+			{
+				actFunc = std::make_shared<MonoOperation>(actType, nullptr);
+				if (!last)
+					myExpr = actFunc;
+				else
+				{
+					if (auto monoPtr = dynamic_cast<MonoOperation *>(last.get()))
+						monoPtr->obj = actFunc;
+
+					else if (auto binPtr = dynamic_cast<BinaryOperation *>(last.get()))
+						binPtr->rightObj = actFunc;
+				}
+				last = actFunc;
+			}
+			else
+			{
+				int actPriority = typeToPriority.at(actType);
+				std::shared_ptr<Expression> base = myExpr, prev;
+
+				while (actPriority >= typeToPriority.at(base->exprType))
+				{
+					prev = base;
+					if (auto monoPtr = dynamic_cast<MonoOperation *>(base.get()))
+						base = monoPtr->obj;
+					else if (auto binPtr = dynamic_cast<BinaryOperation *>(base.get()))
+						base = binPtr->rightObj;
+				}
+
+				if (!prev)
+				{
+					auto leftArg = myExpr;
+					myExpr = std::make_shared<BinaryOperation>(actType, leftArg, nullptr);
+					last = myExpr;
+				}
+				else
+				{
+					actFunc = std::make_shared<BinaryOperation>(actType, base, nullptr);
+					auto binPtr = dynamic_cast<BinaryOperation *>(prev.get());
+					binPtr->rightObj = actFunc;
+					last = actFunc;
+				}
+			}
+		}
 	}
 
 	return myExpr;

@@ -24,11 +24,7 @@ class Expression
 {
 public:
 	virtual ~Expression() = default;
-	virtual types getType()
-	{
-		return exprType;
-	}
-
+	friend std::shared_ptr<Expression> parse(const std::string &);
 protected:
 	types exprType;
 	Expression() = default;
@@ -59,6 +55,7 @@ private:
 
 public:
 	MonoOperation(types oper, std::shared_ptr<Expression> other);
+	friend std::shared_ptr<Expression> parse(const std::string &);
 };
 
 class BinaryOperation : public Expression
@@ -66,9 +63,9 @@ class BinaryOperation : public Expression
 private:
 	std::shared_ptr<Expression> leftObj;
 	std::shared_ptr<Expression> rightObj;
-
 public:
 	BinaryOperation(types oper, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right);
+	friend std::shared_ptr<Expression> parse(const std::string &);
 };
 
 #endif
