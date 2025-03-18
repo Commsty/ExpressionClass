@@ -27,6 +27,31 @@ const std::map<types, doubleArgFunction> doubles{
      { return a / b; }},
     {types::pow, std::powl}};
 
+std::shared_ptr<Expression> operator+(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
+{
+    return std::make_shared<BinaryOperation>(types::plus, argLeft, argRight);
+}
+
+std::shared_ptr<Expression> operator-(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
+{
+    return std::make_shared<BinaryOperation>(types::minus, argLeft, argRight);
+}
+
+std::shared_ptr<Expression> operator*(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
+{
+    return std::make_shared<BinaryOperation>(types::multiplication, argLeft, argRight);
+}
+
+std::shared_ptr<Expression> operator/(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
+{
+    return std::make_shared<BinaryOperation>(types::division, argLeft, argRight);
+}
+
+std::shared_ptr<Expression> operator^(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
+{
+    return std::make_shared<BinaryOperation>(types::pow, argLeft, argRight);
+}
+
 Constant::Constant(const char *strNum)
     : num(strtold(strNum, nullptr))
 {
@@ -54,6 +79,11 @@ long double Constant::evaluate([[maybe_unused]] const std::map<std::string, long
     return num;
 }
 
+std::shared_ptr<Expression> Constant::differentiate(const std::string &arg) const
+{
+    return std::make_shared<Constant>("0");
+}
+
 Variable::Variable(std::string strVar)
     : var(strVar)
 {
@@ -70,6 +100,13 @@ long double Variable::evaluate(const std::map<std::string, long double> *args) c
     if (!args)
         return 0.0l;
     return args->at(var);
+}
+
+std::shared_ptr<Expression> Variable::differentiate(const std::string &arg) const
+{
+    if (var != arg)
+        return std::make_shared<Constant>("0");
+    return std::make_shared<Constant>("1");
 }
 
 MonoOperation::MonoOperation(types oper, std::shared_ptr<Expression> other)
@@ -105,6 +142,17 @@ long double MonoOperation::evaluate(const std::map<std::string, long double> *ar
     {
         singleArgFunction actFunc = singles.at(exprType);
         return actFunc(obj->evaluate(args));
+    }
+}
+
+std::shared_ptr<Expression> MonoOperation::differentiate(const std::string &arg) const
+{
+    switch (exprType)
+    {
+    case types::brackets:
+        return std::make_shared<MonoOperation>(types::brackets, obj->differentiate(arg));
+    case types::sin:
+        return std::make_shared<MonoOperation>(types::cos, obj) * obj->differentiate(arg);
     }
 }
 
