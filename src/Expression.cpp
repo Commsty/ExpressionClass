@@ -79,7 +79,7 @@ long double Constant::evaluate([[maybe_unused]] const std::map<std::string, long
     return num;
 }
 
-std::shared_ptr<Expression> Constant::differentiate(const std::string &arg) const
+std::shared_ptr<Expression> Constant::differentiate([[maybe_unused]] const std::string &arg) const
 {
     return std::make_shared<Constant>("0");
 }
@@ -147,12 +147,25 @@ long double MonoOperation::evaluate(const std::map<std::string, long double> *ar
 
 std::shared_ptr<Expression> MonoOperation::differentiate(const std::string &arg) const
 {
+    std::shared_ptr<Expression> underExpr;
     switch (exprType)
     {
     case types::brackets:
         return std::make_shared<MonoOperation>(types::brackets, obj->differentiate(arg));
     case types::sin:
-        return std::make_shared<MonoOperation>(types::cos, obj) * obj->differentiate(arg);
+        underExpr = std::make_shared<MonoOperation>(types::cos, obj) * obj->differentiate(arg);
+        return std::make_shared<MonoOperation>(types::brackets, underExpr);
+    case types::cos:
+        underExpr = std::make_shared<Constant>("-1") * std::make_shared<MonoOperation>(types::sin, obj) * obj->differentiate(arg);
+        return std::make_shared<MonoOperation>(types::brackets, underExpr);
+    case types::ln:
+        underExpr = obj->differentiate(arg) / obj;
+        return std::make_shared<MonoOperation>(types::brackets, underExpr);
+    case types::exp:
+        underExpr = std::make_shared<MonoOperation>(*this) * obj->differentiate(arg);
+        return std::make_shared<MonoOperation>(types::brackets, underExpr);
+    default:
+        return nullptr;
     }
 }
 
@@ -191,4 +204,26 @@ std::ostream &operator<<(std::ostream &s, const Expression &expr)
 {
     s << expr.getString();
     return s;
+}
+
+std::shared_ptr<Expression> BinaryOperation::differentiate(const std::string &arg) const
+{
+    std::shared_ptr<Expression> underExpr;
+
+    switch (exprType)
+    {
+    case types::plus:
+        return leftObj->differentiate(arg) + rightObj->differentiate(arg);
+    case types::minus:
+        return leftObj->differentiate(arg) - rightObj->differentiate(arg);
+    case types::multiplication:
+        return leftObj->differentiate(arg) * rightObj + leftObj * rightObj->differentiate(arg);
+    case types::division:
+        return (leftObj->differentiate(arg) * rightObj - leftObj * rightObj->differentiate(arg)) / (rightObj * rightObj);
+    case types::pow:
+        underExpr = std::make_shared<MonoOperation>(types::brackets, rightObj - std::make_shared<Constant>("1"));
+        return rightObj * std::make_shared<BinaryOperation>(types::pow, leftObj, underExpr);
+    default:
+        return nullptr;
+    }
 }

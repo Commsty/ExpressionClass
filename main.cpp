@@ -9,9 +9,10 @@ using namespace std;
 
 int main()
 {
-	std::map<std::string, long double> myMap{{"x", 5.0l},{"y",3.0l}};
-	std::string tr = "123*sin((sin(cos(sin(x)))*ln(x^3))^y)";
+	std::map<std::string, long double> myMap{{"x", 3.14l}};
+	std::string tr = "exp(sin(10*x^5+10*x^4+10*x^3))";
 	std::shared_ptr<Expression> res = parse(tr);
 	cout << res->evaluate(&myMap) << std::endl;
+	// cout<<*res;
 	return 0;
 }
