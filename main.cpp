@@ -9,8 +9,9 @@ using namespace std;
 
 int main()
 {
-	std::string tr = "exp(3)-2*x*y^5^(23-x)";
+	std::map<std::string, long double> myMap{{"x", 5.0l}};
+	std::string tr = "x^3-x*0.2";
 	std::shared_ptr<Expression> res = parse(tr);
-	cout << *res << std::endl;
+	cout << res->evaluate(myMap) << std::endl;
 	return 0;
 }

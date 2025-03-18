@@ -4,7 +4,8 @@
 
 #include <string>
 #include <memory>
-#include<ostream>
+#include <ostream>
+#include <map>
 
 enum class types
 {
@@ -26,8 +27,9 @@ class Expression
 public:
 	virtual ~Expression() = default;
 	virtual std::string getString() const = 0;
+	virtual long double evaluate(const std::map<std::string, long double> &) const = 0;
 	friend std::shared_ptr<Expression> parse(const std::string &);
-	friend std::ostream& operator<<(std::ostream&,const Expression&);
+	friend std::ostream &operator<<(std::ostream &, const Expression &);
 
 protected:
 	types exprType;
@@ -42,18 +44,22 @@ class Constant : public Expression
 {
 private:
 	long double num;
+
 public:
 	Constant(const char *);
 	std::string getString() const override;
+	long double evaluate(const std::map<std::string, long double> &) const override;
 };
 
 class Variable : public Expression
 {
 private:
 	std::string var;
+
 public:
 	Variable(std::string strVar);
-	std::string getString()const override;
+	std::string getString() const override;
+	long double evaluate(const std::map<std::string, long double> &) const override;
 };
 
 class MonoOperation : public Expression
@@ -65,6 +71,7 @@ public:
 	MonoOperation(types oper, std::shared_ptr<Expression> other);
 	friend std::shared_ptr<Expression> parse(const std::string &);
 	std::string getString() const override;
+	long double evaluate(const std::map<std::string, long double> &) const override;
 };
 
 class BinaryOperation : public Expression
@@ -76,7 +83,8 @@ private:
 public:
 	BinaryOperation(types oper, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right);
 	friend std::shared_ptr<Expression> parse(const std::string &);
-	std::string getString()const  override;
+	std::string getString() const override;
+	long double evaluate(const std::map<std::string, long double> &) const override;
 };
 
 #endif
