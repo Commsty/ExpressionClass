@@ -49,7 +49,7 @@ std::string Constant::getString() const
     }
 }
 
-long double Constant::evaluate(const std::map<std::string, long double> &args) const
+long double Constant::evaluate([[maybe_unused]] const std::map<std::string, long double> *args) const
 {
     return num;
 }
@@ -65,9 +65,11 @@ std::string Variable::getString() const
     return var;
 }
 
-long double Variable::evaluate(const std::map<std::string, long double> &args) const
+long double Variable::evaluate(const std::map<std::string, long double> *args) const
 {
-    return args.at(var);
+    if (!args)
+        return 0.0l;
+    return args->at(var);
 }
 
 MonoOperation::MonoOperation(types oper, std::shared_ptr<Expression> other)
@@ -95,7 +97,7 @@ std::string MonoOperation::getString() const
     }
 }
 
-long double MonoOperation::evaluate(const std::map<std::string, long double> &args) const
+long double MonoOperation::evaluate(const std::map<std::string, long double> *args) const
 {
     if (exprType == types::brackets)
         return obj->evaluate(args);
@@ -131,7 +133,7 @@ std::string BinaryOperation::getString() const
     }
 }
 
-long double BinaryOperation::evaluate(const std::map<std::string, long double> &args) const
+long double BinaryOperation::evaluate(const std::map<std::string, long double> *args) const
 {
     doubleArgFunction actFunc = doubles.at(exprType);
     return actFunc(leftObj->evaluate(args), rightObj->evaluate(args));
