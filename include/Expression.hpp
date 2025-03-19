@@ -32,6 +32,7 @@ public:
 
 	friend std::shared_ptr<Expression> parse(const std::string &);
 	friend std::ostream &operator<<(std::ostream &, const Expression &);
+	friend void beautify(std::shared_ptr<Expression>&);
 
 protected:
 	types exprType;
@@ -59,6 +60,8 @@ public:
 	std::string getString() const override;
 	long double evaluate(const std::map<std::string, long double> *) const override;
 	std::shared_ptr<Expression> differentiate(const std::string &) const override;
+
+	friend void beautify(std::shared_ptr<Expression>&);
 };
 
 class Variable : public Expression
@@ -71,6 +74,8 @@ public:
 	std::string getString() const override;
 	long double evaluate(const std::map<std::string, long double> *) const override;
 	std::shared_ptr<Expression> differentiate(const std::string &) const override;
+
+	friend void beautify(std::shared_ptr<Expression>&);
 };
 
 class MonoOperation : public Expression
@@ -84,6 +89,8 @@ public:
 	std::string getString() const override;
 	long double evaluate(const std::map<std::string, long double> *) const override;
 	std::shared_ptr<Expression> differentiate(const std::string &) const override;
+
+	friend void beautify(std::shared_ptr<Expression>&);
 };
 
 class BinaryOperation : public Expression
@@ -98,6 +105,8 @@ public:
 	std::string getString() const override;
 	long double evaluate(const std::map<std::string, long double> *) const override;
 	std::shared_ptr<Expression> differentiate(const std::string &) const override;
+
+	friend void beautify(std::shared_ptr<Expression>&);
 };
 
 #endif

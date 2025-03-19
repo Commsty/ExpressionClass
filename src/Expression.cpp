@@ -29,27 +29,37 @@ const std::map<types, doubleArgFunction> doubles{
 
 std::shared_ptr<Expression> operator+(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
 {
-    return std::make_shared<BinaryOperation>(types::plus, argLeft, argRight);
+    std::shared_ptr<Expression> temp = std::make_shared<BinaryOperation>(types::plus, argLeft, argRight);
+    beautify(temp);
+    return temp;
 }
 
 std::shared_ptr<Expression> operator-(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
 {
-    return std::make_shared<BinaryOperation>(types::minus, argLeft, argRight);
+    std::shared_ptr<Expression> temp = std::make_shared<BinaryOperation>(types::minus, argLeft, argRight);
+    beautify(temp);
+    return temp;
 }
 
 std::shared_ptr<Expression> operator*(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
 {
-    return std::make_shared<BinaryOperation>(types::multiplication, argLeft, argRight);
+    std::shared_ptr<Expression> temp = std::make_shared<BinaryOperation>(types::multiplication, argLeft, argRight);
+    beautify(temp);
+    return temp;
 }
 
 std::shared_ptr<Expression> operator/(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
 {
-    return std::make_shared<BinaryOperation>(types::division, argLeft, argRight);
+    std::shared_ptr<Expression> temp = std::make_shared<BinaryOperation>(types::division, argLeft, argRight);
+    beautify(temp);
+    return temp;
 }
 
 std::shared_ptr<Expression> operator^(std::shared_ptr<Expression> argLeft, std::shared_ptr<Expression> argRight)
 {
-    return std::make_shared<BinaryOperation>(types::pow, argLeft, argRight);
+    std::shared_ptr<Expression> temp = std::make_shared<BinaryOperation>(types::pow, argLeft, argRight);
+    beautify(temp);
+    return temp;
 }
 
 Constant::Constant(const char *strNum)
@@ -151,19 +161,29 @@ std::shared_ptr<Expression> MonoOperation::differentiate(const std::string &arg)
     switch (exprType)
     {
     case types::brackets:
-        return std::make_shared<MonoOperation>(types::brackets, obj->differentiate(arg));
+        underExpr = std::make_shared<MonoOperation>(types::brackets, obj->differentiate(arg));
+        beautify(underExpr);
+        return underExpr;
     case types::sin:
         underExpr = std::make_shared<MonoOperation>(types::cos, obj) * obj->differentiate(arg);
-        return std::make_shared<MonoOperation>(types::brackets, underExpr);
+        underExpr = std::make_shared<MonoOperation>(types::brackets, underExpr);
+        beautify(underExpr);
+        return underExpr;
     case types::cos:
         underExpr = std::make_shared<Constant>("-1") * std::make_shared<MonoOperation>(types::sin, obj) * obj->differentiate(arg);
-        return std::make_shared<MonoOperation>(types::brackets, underExpr);
+        underExpr = std::make_shared<MonoOperation>(types::brackets, underExpr);
+        beautify(underExpr);
+        return underExpr;
     case types::ln:
         underExpr = obj->differentiate(arg) / obj;
-        return std::make_shared<MonoOperation>(types::brackets, underExpr);
+        underExpr = std::make_shared<MonoOperation>(types::brackets, underExpr);
+        beautify(underExpr);
+        return underExpr;
     case types::exp:
         underExpr = std::make_shared<MonoOperation>(*this) * obj->differentiate(arg);
-        return std::make_shared<MonoOperation>(types::brackets, underExpr);
+        underExpr = std::make_shared<MonoOperation>(types::brackets, underExpr);
+        beautify(underExpr);
+        return underExpr;
     default:
         return nullptr;
     }
@@ -200,12 +220,6 @@ long double BinaryOperation::evaluate(const std::map<std::string, long double> *
     return actFunc(leftObj->evaluate(args), rightObj->evaluate(args));
 }
 
-std::ostream &operator<<(std::ostream &s, const Expression &expr)
-{
-    s << expr.getString();
-    return s;
-}
-
 std::shared_ptr<Expression> BinaryOperation::differentiate(const std::string &arg) const
 {
     std::shared_ptr<Expression> underExpr;
@@ -213,17 +227,125 @@ std::shared_ptr<Expression> BinaryOperation::differentiate(const std::string &ar
     switch (exprType)
     {
     case types::plus:
-        return leftObj->differentiate(arg) + rightObj->differentiate(arg);
+        underExpr = leftObj->differentiate(arg) + rightObj->differentiate(arg);
+        beautify(underExpr);
+        return underExpr;
     case types::minus:
-        return leftObj->differentiate(arg) - rightObj->differentiate(arg);
+        underExpr = leftObj->differentiate(arg) - rightObj->differentiate(arg);
+        beautify(underExpr);
+        return underExpr;
     case types::multiplication:
-        return leftObj->differentiate(arg) * rightObj + leftObj * rightObj->differentiate(arg);
+        underExpr = leftObj->differentiate(arg) * rightObj + leftObj * rightObj->differentiate(arg);
+        beautify(underExpr);
+        return underExpr;
     case types::division:
-        return (leftObj->differentiate(arg) * rightObj - leftObj * rightObj->differentiate(arg)) / (rightObj * rightObj);
+        underExpr = std::make_shared<MonoOperation>(types::brackets, leftObj->differentiate(arg) * rightObj - leftObj * rightObj->differentiate(arg));
+        underExpr = underExpr / (rightObj ^ std::make_shared<Constant>("2"));
+        beautify(underExpr);
+        return underExpr;
     case types::pow:
         underExpr = std::make_shared<MonoOperation>(types::brackets, rightObj - std::make_shared<Constant>("1"));
-        return rightObj * std::make_shared<BinaryOperation>(types::pow, leftObj, underExpr);
+        underExpr = rightObj * std::make_shared<BinaryOperation>(types::pow, leftObj, underExpr);
+        beautify(underExpr);
+        return underExpr;
     default:
         return nullptr;
+    }
+}
+
+std::ostream &operator<<(std::ostream &s, const Expression &expr)
+{
+    s << expr.getString();
+    return s;
+}
+
+void beautify(std::shared_ptr<Expression> &exprPtr)
+{
+    auto ptrMono = dynamic_cast<MonoOperation *>(exprPtr.get());
+    if (ptrMono)
+    {
+        Constant *ptrObj = dynamic_cast<Constant *>(ptrMono->obj.get());
+        switch (ptrMono->exprType)
+        {
+        case types::sin:
+            if (ptrObj && fabsl(ptrObj->num) <= 0.0000001l)
+                exprPtr = std::make_shared<Constant>("0");
+            break;
+        case types::cos:
+            if (ptrObj && fabsl(ptrObj->num) <= 0.0000001l)
+                exprPtr = std::make_shared<Constant>("1");
+            break;
+        case types::ln:
+            if (ptrObj && fabsl(ptrObj->num - 1.0l) <= 0.0000001l)
+                exprPtr = std::make_shared<Constant>("0");
+            break;
+        case types::exp:
+            if (ptrObj && fabsl(ptrObj->num) <= 0.0000001l)
+                exprPtr = std::make_shared<Constant>("1");
+            break;
+        case types::brackets:
+            if (dynamic_cast<Constant *>(ptrMono->obj.get()) || dynamic_cast<Variable *>(ptrMono->obj.get()) || dynamic_cast<MonoOperation *>(ptrMono->obj.get()))
+                exprPtr = ptrMono->obj;
+            break;
+        default:;
+        }
+    }
+    auto ptrBin = dynamic_cast<BinaryOperation *>(exprPtr.get());
+    if (ptrBin)
+    {
+        Constant *ptrObjLeft = dynamic_cast<Constant *>(ptrBin->leftObj.get());
+        Constant *ptrObjRight = dynamic_cast<Constant *>(ptrBin->rightObj.get());
+        switch (ptrBin->exprType)
+        {
+        case types::plus:
+            if (ptrObjLeft && fabsl(ptrObjLeft->num) <= 0.0000001l)
+                exprPtr = ptrBin->rightObj;
+            else if (ptrObjRight && fabsl(ptrObjRight->num) <= 0.0000001l)
+                exprPtr = ptrBin->leftObj;
+            else if (ptrObjLeft && ptrObjRight)
+                exprPtr = std::make_shared<Constant>(std::to_string(ptrObjLeft->num + ptrObjRight->num).c_str());
+            break;
+        case types::minus:
+            if (ptrObjRight && fabsl(ptrObjRight->num) <= 0.0000001l)
+                exprPtr = ptrBin->leftObj;
+            else if (ptrObjLeft && ptrObjRight)
+                exprPtr = std::make_shared<Constant>(std::to_string(ptrObjLeft->num - ptrObjRight->num).c_str());
+            break;
+        case types::multiplication:
+            if (ptrObjLeft && fabsl(ptrObjLeft->num) <= 0.0000001l)
+                exprPtr = std::make_shared<Constant>("0");
+            else if (ptrObjRight && fabsl(ptrObjRight->num) <= 0.0000001l)
+                exprPtr = std::make_shared<Constant>("0");
+            else if (ptrObjLeft && fabsl(ptrObjLeft->num - 1.0l) <= 0.0000001l)
+                exprPtr = ptrBin->rightObj;
+            else if (ptrObjRight && fabsl(ptrObjRight->num - 1.0l) <= 0.0000001l)
+                exprPtr = ptrBin->leftObj;
+            else if (ptrObjLeft && ptrObjRight)
+                exprPtr = std::make_shared<Constant>(std::to_string(ptrObjLeft->num * ptrObjRight->num).c_str());
+            break;
+        case types::division:
+            if (ptrObjLeft && fabsl(ptrObjLeft->num) <= 0.0000001l && ptrObjRight && fabsl(ptrObjRight->num) >= 0.0000001l)
+                exprPtr = std::make_shared<Constant>("0");
+            else if (ptrObjLeft && fabsl(ptrObjLeft->num) <= 0.0000001l && (!ptrObjRight))
+                exprPtr = std::make_shared<Constant>("0");
+            else if (ptrObjLeft && ptrObjRight && fabsl(ptrObjRight->num) >= 0.0000001l)
+                exprPtr = std::make_shared<Constant>(std::to_string(ptrObjLeft->num / ptrObjRight->num).c_str());
+            break;
+        case types::pow:
+            if (ptrObjLeft && fabsl(ptrObjLeft->num) <= 0.0000001l && ptrObjRight && fabsl(ptrObjRight->num) >= 0.0000001l)
+                exprPtr = exprPtr = std::make_shared<Constant>("0");
+            else if (ptrObjLeft && fabsl(ptrObjLeft->num) <= 0.0000001l && (!ptrObjRight))
+                exprPtr = std::make_shared<Constant>("0");
+            else if (ptrObjLeft && fabsl(ptrObjLeft->num) >= 0.0000001l && ptrObjRight && fabsl(ptrObjRight->num) <= 0.0000001l)
+                exprPtr = std::make_shared<Constant>("1");
+            else if ((!ptrObjLeft) && ptrObjRight && fabsl(ptrObjRight->num) <= 0.0000001l)
+                exprPtr = std::make_shared<Constant>("1");
+            else if ((!ptrObjLeft) && ptrObjRight && fabsl(ptrObjRight->num-1.0l) <= 0.0000001l)
+                exprPtr = ptrBin->leftObj;
+            else if (ptrObjLeft && fabsl(ptrObjLeft->num) >= 0.0000001l && ptrObjRight && fabsl(ptrObjRight->num) >= 0.0000001l)
+                exprPtr = std::make_shared<Constant>(std::to_string(std::powl(ptrObjLeft->num, ptrObjRight->num)).c_str());
+            break;
+        default:;
+        }
     }
 }
