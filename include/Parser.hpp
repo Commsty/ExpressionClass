@@ -4,8 +4,8 @@
 
 #include<memory>
 
-#include"Expression.hpp"
+#include"Expression_Impl.hpp"
 
-std::shared_ptr<Expression> parse(const std::string&);
+std::shared_ptr<ExprImpl> parse(const std::string&);
 
 #endif

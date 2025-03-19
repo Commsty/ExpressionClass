@@ -1,5 +1,5 @@
 #include "../include/Parser.hpp"
-#include "../include/Expression.hpp"
+#include "../include/Expression_Impl.hpp"
 
 #include <vector>
 #include <map>
@@ -86,12 +86,12 @@ namespace
 	}
 };
 
-std::shared_ptr<Expression> parse(const std::string &data)
+std::shared_ptr<ExprImpl> parse(const std::string &data)
 {
 	auto tokens = tokenize(data);
 
-	std::shared_ptr<Expression> myExpr;
-	std::shared_ptr<Expression> last;
+	std::shared_ptr<ExprImpl> myExpr;
+	std::shared_ptr<ExprImpl> last;
 
 	for (size_t i = 0; i < tokens->size(); i++)
 	{
@@ -142,7 +142,7 @@ std::shared_ptr<Expression> parse(const std::string &data)
 		else
 		{
 			types actType = getStringType(actToken);
-			std::shared_ptr<Expression> actFunc;
+			std::shared_ptr<ExprImpl> actFunc;
 
 			if (actType == types::sin || actType == types::cos || actType == types::ln || actType == types::exp)
 			{
@@ -162,7 +162,7 @@ std::shared_ptr<Expression> parse(const std::string &data)
 			else
 			{
 				int actPriority = typeToPriority.at(actType);
-				std::shared_ptr<Expression> base = myExpr, prev;
+				std::shared_ptr<ExprImpl> base = myExpr, prev;
 
 				while (actPriority >= typeToPriority.at(base->exprType))
 				{
