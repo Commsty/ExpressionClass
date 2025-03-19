@@ -62,6 +62,17 @@ std::shared_ptr<Expression> operator^(std::shared_ptr<Expression> argLeft, std::
     return temp;
 }
 
+Constant::Constant(const Constant &other) : Expression(other), num(other.num) {}
+Constant &Constant::operator=(const Constant &other)
+{
+    if (this != &other)
+    {
+        Expression::operator=(other);
+        num = other.num;
+    }
+    return *this;
+}
+
 Constant::Constant(const char *strNum)
     : num(strtold(strNum, nullptr))
 {
@@ -94,6 +105,23 @@ std::shared_ptr<Expression> Constant::differentiate([[maybe_unused]] const std::
     return std::make_shared<Constant>("0");
 }
 
+std::shared_ptr<Expression> Constant::clone() const
+{
+    return std::make_shared<Constant>(std::to_string(num).c_str());
+}
+
+Variable::Variable(const Variable &other) : Expression(other), var(other.var) {}
+
+Variable &Variable::operator=(const Variable &other)
+{
+    if (this != &other)
+    {
+        Expression::operator=(other);
+        var = other.var;
+    }
+    return *this;
+}
+
 Variable::Variable(std::string strVar)
     : var(strVar)
 {
@@ -117,6 +145,23 @@ std::shared_ptr<Expression> Variable::differentiate(const std::string &arg) cons
     if (var != arg)
         return std::make_shared<Constant>("0");
     return std::make_shared<Constant>("1");
+}
+
+std::shared_ptr<Expression> Variable::clone() const
+{
+    return std::make_shared<Variable>(var);
+}
+
+MonoOperation::MonoOperation(const MonoOperation &other) : Expression(other), obj(other.obj->clone()) {}
+
+MonoOperation &MonoOperation::operator=(const MonoOperation &other)
+{
+    if (this != &other)
+    {
+        Expression::operator=(other);
+        obj = other.obj->clone();
+    }
+    return *this;
 }
 
 MonoOperation::MonoOperation(types oper, std::shared_ptr<Expression> other)
@@ -189,6 +234,25 @@ std::shared_ptr<Expression> MonoOperation::differentiate(const std::string &arg)
     }
 }
 
+std::shared_ptr<Expression> MonoOperation::clone() const
+{
+    return std::make_shared<MonoOperation>(exprType, obj->clone());
+}
+
+BinaryOperation::BinaryOperation(const BinaryOperation &other)
+    : Expression(other), leftObj(other.leftObj->clone()), rightObj(other.rightObj - clone()) {}
+
+BinaryOperation &BinaryOperation::operator=(const BinaryOperation &other)
+{
+    if (this != &other)
+    {
+        Expression::operator=(other);
+        leftObj = other.leftObj->clone();
+        rightObj = other.rightObj->clone();
+    }
+    return *this;
+}
+
 BinaryOperation::BinaryOperation(types oper, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right)
     : leftObj(left), rightObj(right)
 {
@@ -251,6 +315,11 @@ std::shared_ptr<Expression> BinaryOperation::differentiate(const std::string &ar
     default:
         return nullptr;
     }
+}
+
+std::shared_ptr<Expression> BinaryOperation::clone() const
+{
+    return std::make_shared<BinaryOperation>(exprType, leftObj->clone(), rightObj->clone());
 }
 
 std::ostream &operator<<(std::ostream &s, const Expression &expr)
@@ -340,7 +409,7 @@ void beautify(std::shared_ptr<Expression> &exprPtr)
                 exprPtr = std::make_shared<Constant>("1");
             else if ((!ptrObjLeft) && ptrObjRight && fabsl(ptrObjRight->num) <= 0.0000001l)
                 exprPtr = std::make_shared<Constant>("1");
-            else if ((!ptrObjLeft) && ptrObjRight && fabsl(ptrObjRight->num-1.0l) <= 0.0000001l)
+            else if ((!ptrObjLeft) && ptrObjRight && fabsl(ptrObjRight->num - 1.0l) <= 0.0000001l)
                 exprPtr = ptrBin->leftObj;
             else if (ptrObjLeft && fabsl(ptrObjLeft->num) >= 0.0000001l && ptrObjRight && fabsl(ptrObjRight->num) >= 0.0000001l)
                 exprPtr = std::make_shared<Constant>(std::to_string(std::powl(ptrObjLeft->num, ptrObjRight->num)).c_str());
