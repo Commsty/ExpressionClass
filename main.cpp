@@ -6,8 +6,8 @@ using namespace std;
  
 int main()
 {
-	std::map<std::string, long double> myMap{{"x", 0.0l}};
-	Expression test("sin(cos(x))");
-	cout<<test.evaluate(&myMap);
-	return 0;
+	std::map<std::string, long double> myMap{{"x", 757.3l},{"y",5.0l}};
+	Expression t1("(0)");
+	Expression t2("exp(sin (cos(3  *x*  y)))");
+	cout<<t2.evaluate(&myMap);
 }

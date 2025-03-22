@@ -1,9 +1,16 @@
 #include "../include/Expression.hpp"
-#include"../include/Parser.hpp"
+#include "../include/Parser.hpp"
+
+#include <algorithm>
 
 Expression::Expression(std::shared_ptr<ExprImpl> ptr) : expr(ptr) {}
 
-Expression::Expression(const char *strExpr) : expr(parse(strExpr)) {}
+Expression::Expression(const char *strExpr)
+{
+    std::string strExprReducted = std::string(strExpr);
+    strExprReducted.erase(std::remove(strExprReducted.begin(), strExprReducted.end(), ' '), strExprReducted.end());
+    expr = parse(strExprReducted.c_str());
+}
 
 Expression::Expression(long double arg) : expr(std::make_shared<Constant>(std::to_string(arg).c_str())) {}
 

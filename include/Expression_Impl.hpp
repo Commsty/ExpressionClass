@@ -7,6 +7,12 @@
 #include <ostream>
 #include <map>
 
+class DivisionByZeroError : public std::exception
+{
+public:
+	const char *what() const noexcept;
+};
+
 enum class types
 {
 	plus,

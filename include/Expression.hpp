@@ -4,6 +4,8 @@
 
 #include "Expression_Impl.hpp"
 
+class DivisionByZeroError;
+
 class Expression
 {
 private:

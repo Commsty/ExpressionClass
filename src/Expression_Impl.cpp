@@ -7,6 +7,11 @@
 #include <limits>
 #include <functional>
 
+const char *DivisionByZeroError::what() const noexcept
+{
+	return "Division by zero is not allowed!";
+}
+
 using singleArgFunction = std::function<long double(long double)>;
 using doubleArgFunction = std::function<long double(long double, long double)>;
 
@@ -29,6 +34,8 @@ const std::map<types, doubleArgFunction> doubles{
 
 std::shared_ptr<ExprImpl> operator+(std::shared_ptr<ExprImpl> argLeft, std::shared_ptr<ExprImpl> argRight)
 {
+    beautify(argLeft);
+    beautify(argRight);
     std::shared_ptr<ExprImpl> temp = std::make_shared<BinaryOperation>(types::plus, argLeft, argRight);
     beautify(temp);
     return temp;
@@ -36,6 +43,8 @@ std::shared_ptr<ExprImpl> operator+(std::shared_ptr<ExprImpl> argLeft, std::shar
 
 std::shared_ptr<ExprImpl> operator-(std::shared_ptr<ExprImpl> argLeft, std::shared_ptr<ExprImpl> argRight)
 {
+    beautify(argLeft);
+    beautify(argRight);
     std::shared_ptr<ExprImpl> temp = std::make_shared<BinaryOperation>(types::minus, argLeft, argRight);
     beautify(temp);
     return temp;
@@ -43,6 +52,8 @@ std::shared_ptr<ExprImpl> operator-(std::shared_ptr<ExprImpl> argLeft, std::shar
 
 std::shared_ptr<ExprImpl> operator*(std::shared_ptr<ExprImpl> argLeft, std::shared_ptr<ExprImpl> argRight)
 {
+    beautify(argLeft);
+    beautify(argRight);
     std::shared_ptr<ExprImpl> temp = std::make_shared<BinaryOperation>(types::multiplication, argLeft, argRight);
     beautify(temp);
     return temp;
@@ -50,6 +61,8 @@ std::shared_ptr<ExprImpl> operator*(std::shared_ptr<ExprImpl> argLeft, std::shar
 
 std::shared_ptr<ExprImpl> operator/(std::shared_ptr<ExprImpl> argLeft, std::shared_ptr<ExprImpl> argRight)
 {
+    beautify(argLeft);
+    beautify(argRight);
     std::shared_ptr<ExprImpl> temp = std::make_shared<BinaryOperation>(types::division, argLeft, argRight);
     beautify(temp);
     return temp;
@@ -57,6 +70,8 @@ std::shared_ptr<ExprImpl> operator/(std::shared_ptr<ExprImpl> argLeft, std::shar
 
 std::shared_ptr<ExprImpl> operator^(std::shared_ptr<ExprImpl> argLeft, std::shared_ptr<ExprImpl> argRight)
 {
+    beautify(argLeft);
+    beautify(argRight);
     std::shared_ptr<ExprImpl> temp = std::make_shared<BinaryOperation>(types::pow, argLeft, argRight);
     beautify(temp);
     return temp;
@@ -137,7 +152,12 @@ long double Variable::evaluate(const std::map<std::string, long double> *args) c
 {
     if (!args)
         return 0.0l;
-    return args->at(var);
+    try{
+        return args->at(var);
+    }
+    catch(std::out_of_range& e){
+        return 0.0l;
+    }
 }
 
 std::shared_ptr<ExprImpl> Variable::differentiate(const std::string &arg) const
@@ -393,6 +413,8 @@ void beautify(std::shared_ptr<ExprImpl> &exprPtr)
                 exprPtr = std::make_shared<Constant>("0");
             else if (ptrObjLeft && ptrObjRight && fabsl(ptrObjRight->num) >= 0.0000001l)
                 exprPtr = std::make_shared<Constant>(std::to_string(ptrObjLeft->num / ptrObjRight->num).c_str());
+            else if (ptrObjRight && fabsl(ptrObjRight->num) <= 0.0000001l)
+                throw DivisionByZeroError();
             break;
         case types::pow:
             if (ptrObjLeft && fabsl(ptrObjLeft->num) <= 0.0000001l && ptrObjRight && fabsl(ptrObjRight->num) >= 0.0000001l)
