@@ -1,6 +1,6 @@
 CXX:=g++
 CXXFLAGS:= -Wall -Wextra -pedantic -std=c++17 -Wconversion -Wshadow -Wunused -Wuninitialized -g
-TARGET_MAIN:=main
+TARGET_MAIN:=differentiator
 
 SRC_DIR:=src
 BUILD_DIR:=build
@@ -25,7 +25,7 @@ else
 	rm -rf $(BUILD_DIR)
 endif
 
-$(BUILD_DIR)/$(TARGET_MAIN): main.cpp $(OBJS)
+$(BUILD_DIR)/$(TARGET_MAIN): $(TARGET_MAIN).cpp $(OBJS)
 ifeq ($(OS),Windows_NT)
 	@if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
 else

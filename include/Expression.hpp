@@ -33,4 +33,9 @@ public:
     friend std::ostream &operator<<(std::ostream &, const Expression &);
 };
 
+Expression sin(const Expression &);
+Expression cos(const Expression &);
+Expression ln(const Expression &);
+Expression exp(const Expression &);
+
 #endif

@@ -53,6 +53,34 @@ Expression Expression::operator^(const Expression &other) const
     return Expression(res);
 }
 
+Expression sin(const Expression &expr)
+{
+    const std::string exprString = expr.getString();
+    auto newArg = "sin(" + exprString + ")";
+    return Expression(newArg.c_str());
+}
+
+Expression cos(const Expression &expr)
+{
+    const std::string exprString = expr.getString();
+    auto newArg = "cos(" + exprString + ")";
+    return Expression(newArg.c_str());
+}
+
+Expression ln(const Expression &expr)
+{
+    const std::string exprString = expr.getString();
+    auto newArg = "ln(" + exprString + ")";
+    return Expression(newArg.c_str());
+}
+
+Expression exp(const Expression &expr)
+{
+    const std::string exprString = expr.getString();
+    auto newArg = "exp(" + exprString + ")";
+    return Expression(newArg.c_str());
+}
+
 std::string Expression::getString() const
 {
     return expr->getString();

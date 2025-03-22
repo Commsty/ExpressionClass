@@ -216,6 +216,8 @@ long double MonoOperation::evaluate(const std::map<std::string, long double> *ar
     else
     {
         singleArgFunction actFunc = singles.at(exprType);
+        if (exprType==types::ln && obj->evaluate(args)<=0)
+            throw std::invalid_argument("Incorrect expression. Log argument cannot be non-posotove.");
         return actFunc(obj->evaluate(args));
     }
 }
