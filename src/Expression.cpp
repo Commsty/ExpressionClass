@@ -14,7 +14,7 @@ Expression::Expression(const char *strExpr)
     while ((pos = strExprReducted.find("(-", pos)) != std::string::npos)
         strExprReducted.replace(pos, 2, "(0-");
 
-    if (strExprReducted[0]=='-')
+    if (strExprReducted[0] == '-')
         strExprReducted = "0" + strExprReducted;
     expr = parse(strExprReducted.c_str());
 }
@@ -58,6 +58,11 @@ Expression Expression::operator^(const Expression &other) const
 {
     std::shared_ptr<ExprImpl> res = expr ^ other.expr;
     return Expression(res);
+}
+
+bool Expression::operator==(const Expression &other) const
+{
+    return this->getString() == other.getString();
 }
 
 Expression sin(const Expression &expr)

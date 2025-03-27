@@ -21,6 +21,7 @@ public:
     Expression &operator=(const Expression &);
     Expression &operator=(Expression &&) = default;
 
+    bool operator==(const Expression&) const;
     Expression operator+(const Expression &) const;
     Expression operator-(const Expression &) const;
     Expression operator*(const Expression &) const;

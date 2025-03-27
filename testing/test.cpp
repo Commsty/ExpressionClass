@@ -140,6 +140,20 @@ bool testThatDiffWorks4()
     return res.getString() == expected;
 }
 
+bool testThatEqualityWorks()
+{
+    // given
+    Expression a("x");
+    Expression b("sin(u*m^2)");
+
+    // when
+    Expression res = a + b;
+
+    // then
+    Expression expected("x+sin(u*m^2)");
+    return res.getString() == expected.getString();
+}
+
 int main()
 {
     std::vector<Test> MyTests;
@@ -183,6 +197,11 @@ int main()
         MyTests.push_back({"testThatDiffWorks4", true});
     else
         MyTests.push_back({"testThatDiffWorks4", false});
+    //
+    if (testThatEqualityWorks())
+        MyTests.push_back({"testThatEqualityWorks", true});
+    else
+        MyTests.push_back({"testThatEqualityWorks", false});
 
     PrintResults(MyTests);
 
