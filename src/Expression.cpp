@@ -9,6 +9,13 @@ Expression::Expression(const char *strExpr)
 {
     std::string strExprReducted = std::string(strExpr);
     strExprReducted.erase(std::remove(strExprReducted.begin(), strExprReducted.end(), ' '), strExprReducted.end());
+
+    size_t pos = 0;
+    while ((pos = strExprReducted.find("(-", pos)) != std::string::npos)
+        strExprReducted.replace(pos, 2, "(0-");
+
+    if (strExprReducted[0]=='-')
+        strExprReducted = "0" + strExprReducted;
     expr = parse(strExprReducted.c_str());
 }
 

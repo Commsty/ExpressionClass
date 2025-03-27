@@ -9,7 +9,7 @@
 
 const char *DivisionByZeroError::what() const noexcept
 {
-	return "Division by zero is not allowed!";
+    return "Division by zero is not allowed!";
 }
 
 using singleArgFunction = std::function<long double(long double)>;
@@ -98,7 +98,11 @@ std::string Constant::getString() const
 {
     long double intPart;
     if (std::modfl(num, &intPart) == 0.0l)
-        return std::to_string(static_cast<long long>(intPart));
+    {
+        if (num >= 0)
+            return std::to_string(static_cast<long long>(intPart));
+        return "(" + std::to_string(static_cast<long long>(intPart)) + ")";
+    }
     else
     {
         std::ostringstream s;
@@ -106,7 +110,9 @@ std::string Constant::getString() const
         std::string returnString = s.str();
         while (returnString.back() == '0')
             returnString.pop_back();
-        return returnString;
+        if (num >= 0)
+            return returnString;
+        return "(" + returnString + ")";
     }
 }
 
@@ -152,10 +158,12 @@ long double Variable::evaluate(const std::map<std::string, long double> *args) c
 {
     if (!args)
         return 0.0l;
-    try{
+    try
+    {
         return args->at(var);
     }
-    catch(std::out_of_range& e){
+    catch (std::out_of_range &e)
+    {
         return 0.0l;
     }
 }
@@ -216,7 +224,7 @@ long double MonoOperation::evaluate(const std::map<std::string, long double> *ar
     else
     {
         singleArgFunction actFunc = singles.at(exprType);
-        if (exprType==types::ln && obj->evaluate(args)<=0)
+        if (exprType == types::ln && obj->evaluate(args) <= 0)
             throw std::invalid_argument("Incorrect expression. Log argument cannot be non-posotove.");
         return actFunc(obj->evaluate(args));
     }
